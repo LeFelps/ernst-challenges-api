@@ -4,18 +4,6 @@ import connectDB from "../database/connection.js";
 const router = express.Router();
 
 
-router.get('/', (req, res) => {
-    const con = connectDB()
-    con.connect(function (err) {
-        if (err) throw err;
-        con.query("SELECT * FROM challenges", function (err, result, fields) {
-            if (err) throw err;
-            res.send(result)
-        });
-    });
-    res.send()
-})
-
 router.post('/', (req, res) => {
     // const con = connectDB()
     // const challenge = {
@@ -36,11 +24,33 @@ router.post('/', (req, res) => {
 
 router.get('/categories', (req, res) => {
     const con = connectDB()
+
     con.connect(function (err) {
         if (err) throw err;
         con.query("SELECT * FROM categories", function (err, result, fields) {
             if (err) throw err;
-            res.send(result)
+            if (req.query?.min !== 'true') {
+
+                let fullCategories = [...result]
+
+                con.query("SELECT * FROM challenges", function (err, result, fields) {
+                    if (err) throw err;
+
+                    let challenges = [...result]
+
+                    fullCategories.map((category, index) => {
+                        fullCategories[index].challenges = challenges.filter(c => c.categoryId === category.id)
+                        return category
+                    })
+
+                    res.send(fullCategories)
+                });
+            } else {
+                res.send(result)
+            }
+
+
+
         });
     });
 })
@@ -59,7 +69,8 @@ router.post('/categories', (req, res) => {
     });
 })
 
-router.get('/:[id]', (req, res) => {
+
+router.get('/', (req, res) => {
     const con = connectDB()
     con.connect(function (err) {
         if (err) throw err;
@@ -68,10 +79,10 @@ router.get('/:[id]', (req, res) => {
             res.send(result)
         });
     });
-    res.send(users)
+    res.send()
 })
 
-router.get('/categories', (req, res) => {
+router.get('/:id', (req, res) => {
     const con = connectDB()
     con.connect(function (err) {
         if (err) throw err;
@@ -80,7 +91,6 @@ router.get('/categories', (req, res) => {
             res.send(result)
         });
     });
-    res.send(users)
 })
 
 export default router
