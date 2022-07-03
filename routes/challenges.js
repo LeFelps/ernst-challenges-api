@@ -1,14 +1,8 @@
 import express from "express";
-import connectDB from '../database/connection.js'
-
+import connectDB from "../database/connection";
 
 const router = express.Router();
 
-const users = [
-    {
-        "username": "LeFelps"
-    }
-]
 
 router.get('/', (req, res) => {
     res.send(users)
