@@ -5,7 +5,7 @@ import 'dotenv/config'
 import connectDB from './database/connection.js'
 
 import usersRoutes from './routes/users.js'
-import challengesRoutes from './routes/users.js'
+import challengesRoutes from './routes/challenges.js'
 
 
 const app = express();
@@ -14,6 +14,7 @@ const PORT = 5000;
 app.use(bodyParser.json())
 
 app.use('/users', usersRoutes)
+app.use('/challenges', challengesRoutes)
 
 app.get('/', (req, res) => {
 });
