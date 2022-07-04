@@ -5,6 +5,7 @@ const router = express.Router();
 
 
 router.post('/', (req, res) => {
+    res.header("Access-Control-Allow-Origin", "*");
     // const con = connectDB()
     // const challenge = {
 
@@ -23,6 +24,7 @@ router.post('/', (req, res) => {
 })
 
 router.get('/categories', (req, res) => {
+    res.header("Access-Control-Allow-Origin", "*");
     const con = connectDB()
 
     con.connect(function (err) {
@@ -56,6 +58,7 @@ router.get('/categories', (req, res) => {
 })
 
 router.post('/categories', (req, res) => {
+    res.header("Access-Control-Allow-Origin", "*");
     const con = connectDB()
     const category = req.body
     con.connect(function (err) {
@@ -71,6 +74,7 @@ router.post('/categories', (req, res) => {
 
 
 router.get('/', (req, res) => {
+    res.header("Access-Control-Allow-Origin", "*");
     const con = connectDB()
     con.connect(function (err) {
         if (err) throw err;
@@ -83,6 +87,7 @@ router.get('/', (req, res) => {
 })
 
 router.get('/:id', (req, res) => {
+    res.header("Access-Control-Allow-Origin", "*");
     const con = connectDB()
     con.connect(function (err) {
         if (err) throw err;
