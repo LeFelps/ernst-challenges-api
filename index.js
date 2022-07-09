@@ -13,6 +13,13 @@ const PORT = 5000;
 
 app.use(bodyParser.json())
 
+app.use(function (req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', '*');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+    next();
+});
+
 app.use('/users', usersRoutes)
 app.use('/challenges', challengesRoutes)
 
