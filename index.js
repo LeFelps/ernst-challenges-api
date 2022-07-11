@@ -6,6 +6,7 @@ import connectDB from './database/connection.js'
 
 import usersRoutes from './routes/users.js'
 import challengesRoutes from './routes/challenges.js'
+import jobsRoutes from './routes/jobs.js'
 
 
 const app = express();
@@ -22,6 +23,8 @@ app.use(function (req, res, next) {
 
 app.use('/users', usersRoutes)
 app.use('/challenges', challengesRoutes)
+app.use('/jobs', jobsRoutes)
+
 
 app.get('/', (req, res) => {
 });

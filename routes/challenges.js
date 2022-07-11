@@ -80,19 +80,14 @@ router.get('/categories', (req, res) => {
         con.query("SELECT * FROM categories", function (err, result, fields) {
             if (err) throw err;
             if (req.query?.min !== 'true') {
-
                 let fullCategories = [...result]
-
                 con.query("SELECT * FROM challenges", function (err, result, fields) {
                     if (err) throw err;
-
                     let challenges = [...result]
-
                     fullCategories.map((category, index) => {
                         fullCategories[index].challenges = challenges.filter(c => c.categoryId === category.id)
                         return category
                     })
-
                     res.send(fullCategories)
                 });
             } else {
@@ -140,14 +135,13 @@ router.get('/', (req, res) => {
             res.send(result)
         });
     });
-    res.send()
 })
 
 router.get('/:id', (req, res) => {
     const con = connectDB()
     con.connect(function (err) {
         if (err) throw err;
-        con.query("SELECT * FROM challenges", function (err, result, fields) {
+        con.query("SELECT * FROM challenges WHERE id = ?", [], function (err, result, fields) {
             if (err) throw err;
             res.send(result)
         });
