@@ -139,7 +139,7 @@ router.get('/:id', (req, res) => {
     const con = connectDB()
     con.connect(function (err) {
         if (err) throw err;
-        con.query("SELECT * FROM challenges WHERE id = ?", [], function (err, result, fields) {
+        con.query("SELECT * FROM challenges WHERE id = ?", [req.params['id']], function (err, result, fields) {
             if (err) throw err;
             res.send(result)
         });
