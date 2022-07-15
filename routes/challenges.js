@@ -4,24 +4,22 @@ import connectDB from "../database/connection.js";
 const router = express.Router();
 
 
-router.post('/', (request, res) => {
+router.post('/', (req, res) => {
     const con = connectDB()
-    const challenge = {
 
-    }
     con.connect(function (err) {
         if (err) throw err;
 
-        let req = request.body
+        const reqBody = req.body
 
         let challenge = {
-            category_id: req.category?.id,
-            title: req.title,
-            brief: req.brief,
-            description: req.description,
-            icon: req.icon,
-            questions: req.questions,
-            checkpoints: req.chackpoints
+            category_id: reqBody.category?.id,
+            title: reqBody.title,
+            brief: reqBody.brief,
+            description: reqBody.description,
+            icon: reqBody.icon,
+            questions: reqBody.questions,
+            checkpoints: reqBody.checkpoints
         }
 
         con.query("INSERT INTO challenges (categoryId, title, brief, description, icon) VALUES (?, ?, ?, ?, ?)",
