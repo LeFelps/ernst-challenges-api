@@ -10,63 +10,70 @@ router.post('/', (req, res) => {
     con.connect(function (err) {
         if (err) throw err;
 
-        const reqBody = req.body
+        new Promise((resolve, reject) => {
+            const reqBody = req.body
 
-        let challenge = {
-            category_id: reqBody.category?.id,
-            title: reqBody.title,
-            brief: reqBody.brief,
-            description: reqBody.description,
-            icon: reqBody.icon,
-            questions: reqBody.questions,
-            checkpoints: reqBody.checkpoints
-        }
+            let challenge = {
+                categoryId: reqBody.category?.id,
+                title: reqBody.title,
+                brief: reqBody.brief,
+                description: reqBody.description,
+                icon: reqBody.icon,
+                questions: reqBody.questions,
+                checkpoints: reqBody.checkpoints
+            }
 
-        con.query("INSERT INTO challenges (categoryId, title, brief, description, icon) VALUES (?, ?, ?, ?, ?)",
-            [challenge.category_id, challenge.title, challenge.brief, challenge.description, challenge.icon],
-            function (err, result, fields) {
-                if (err) throw err;
+            con.query("INSERT INTO challenges (categoryId, title, brief, description, icon) VALUES (?, ?, ?, ?, ?)",
+                [challenge.categoryId, challenge.title, challenge.brief, challenge.description, challenge.icon],
+                function (err, result, fields) {
+                    if (err) throw err;
 
-                challenge.id = result.insertId
+                    challenge.id = result.insertId
 
-                challenge.questions?.length > 0 ?
-                    challenge.questions.map((question, q_index) => {
-                        con.query("INSERT INTO questions (challengeId, title, type, level) VALUES (?, ?, ?, ?)",
-                            [result.insertId, question.title, question.type, question.level],
-                            function (err, result, fields) {
-                                if (err) throw err;
-                                challenge.questions[index].id = result.insertId
-                                questions.options.map((option, o_index) => {
-                                    con.query("INSERT INTO answers (questionId, type, value, correctAnswer) VALUES (?, ?, ?, ?)",
-                                        [result.insertId, option.type, option.value, option.correctAnswer],
-                                        function (err, result, fields) {
-                                            if (err) throw err;
-                                            challenge.questions[q_index].options[o_index].id = result.insertId
-                                        });
-                                })
-                            });
-                    })
-                    : challenge.questions = []
-                cheallenge.checkpoints?.length > 0 ?
-                    cheallenge.checkpoints.map((checkpoint, c_index) => {
-                        con.query("INSERT INTO checkpoints (challengeId, description, technologies) VALUES (?, ?, ?)",
-                            [result.insertId, checkpoint.description, checkpoint.technologies],
-                            function (err, result, fields) {
-                                if (err) throw err;
-                                challenge.checkpoints[index].id = result.insertId
-                                questions.references.map((reference, r_index) => {
-                                    con.query("INSERT INTO references (checkpointId, title, link) VALUES (?, ?, ?)",
-                                        [result.insertId, reference.title, reference.link],
-                                        function (err, result, fields) {
-                                            if (err) throw err;
-                                            challenge.checkpoints[c_index].reference[r_index].id = result.insertId
-                                        });
-                                })
-                            });
-                    })
-                    : challenge.checkpoints = []
-            });
-        res.send(challenge)
+                    challenge.questions?.length > 0 ?
+                        challenge.questions.map((question, q_index) => {
+                            con.query("INSERT INTO questions (challengeId, title, type, level) VALUES (?, ?, ?, ?)",
+                                [result.insertId, question.title, question.type, question.level],
+                                function (err, result, fields) {
+                                    if (err) throw err;
+                                    challenge.questions[q_index].id = result.insertId
+                                    if (question?.options?.length > 0)
+                                        question.options.map((option, o_index) => {
+                                            con.query("INSERT INTO answers (questionId, type, value, correctAnswer) VALUES (?, ?, ?, ?)",
+                                                [result.insertId, option.type, option.value, option.correctAnswer],
+                                                function (err, result, fields) {
+                                                    if (err) throw err;
+                                                    challenge.questions[q_index].options[o_index].id = result.insertId
+                                                });
+                                        })
+                                });
+                        })
+                        : challenge.questions = []
+                    challenge.checkpoints?.length > 0 ?
+                        challenge.checkpoints.map((checkpoint, c_index) => {
+                            con.query("INSERT INTO checkpoints (challengeId, description, technologies) VALUES (?, ?, ?)",
+                                [result.insertId, checkpoint.description, checkpoint.technologies],
+                                function (err, result, fields) {
+                                    if (err) throw err;
+                                    challenge.checkpoints[c_index].id = result.insertId
+                                    if (checkpoint.references?.length > 0)
+                                        checkpoint.references.map((reference, r_index) => {
+                                            con.query("INSERT INTO references (checkpointId, title, link) VALUES (?, ?, ?)",
+                                                [result.insertId, reference.title, reference.link],
+                                                function (err, result, fields) {
+                                                    if (err) throw err;
+                                                    challenge.checkpoints[c_index].reference[r_index].id = result.insertId
+                                                });
+                                        })
+                                });
+                        })
+                        : challenge.checkpoints = []
+                });
+        })
+            .then(() => {
+                res.send(challenge)
+            })
+
     });
 })
 
