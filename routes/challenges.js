@@ -52,7 +52,7 @@ router.post('/', (req, res) => {
                     challenge.checkpoints?.length > 0 ?
                         challenge.checkpoints.map((checkpoint, c_index) => {
                             con.query("INSERT INTO checkpoints (challengeId, description, technologies) VALUES (?, ?, ?)",
-                                [result.insertId, checkpoint.description, checkpoint.technologies],
+                                [result.insertId, checkpoint.description, checkpoint.technologies ? checkpoint.technologies.join(';') : ""],
                                 function (err, result, fields) {
                                     if (err) throw err;
                                     challenge.checkpoints[c_index].id = result.insertId
