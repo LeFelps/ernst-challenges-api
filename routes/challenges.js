@@ -144,13 +144,34 @@ router.get('/', (req, res) => {
 
 router.get('/:id', (req, res) => {
     const con = connectDB()
-    con.connect(function (err) {
-        if (err) throw err;
-        con.query("SELECT * FROM challenges WHERE id = ?", [req.params['id']], function (err, result, fields) {
+
+    let challenge = {
+
+    }
+    new Promise((resolve, reject) => {
+        con.connect(function (err) {
             if (err) throw err;
-            res.send(result)
+            con.query("SELECT * FROM challenges WHERE id = ?", [req.params['id']], function (err, result, fields) {
+                if (err) throw err;
+            });
+            con.query("SELECT * FROM questions WHERE challengeId = ?", [req.params['id']], function (err, result, fields) {
+                if (err) throw err;
+                result.map((question, index) => {
+                    con.query("SELECT * FROM answers WHERE questionId = ?", [question.id], function (err, result, fields) {
+                        if (err) throw err;
+                    });
+                })
+            });
+            con.query("SELECT * FROM checkpoints WHERE challengeId = ?", [req.params['id']], function (err, result, fields) {
+                if (err) throw err;
+                result.map((checkpoint, index) => {
+                    con.query("SELECT * FROM references WHERE checkpointId = ?", [checkpoint.id], function (err, result, fields) {
+                        if (err) throw err;
+                    });
+                })
+            });
         });
-    });
+    })
 })
 
 export default router
