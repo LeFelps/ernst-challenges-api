@@ -146,31 +146,46 @@ router.get('/:id', (req, res) => {
     const con = connectDB()
 
     let challenge = {
-
+        checkpoints: [],
+        questions: []
     }
     new Promise((resolve, reject) => {
         con.connect(function (err) {
             if (err) throw err;
-            con.query("SELECT * FROM challenges WHERE id = ?", [req.params['id']], function (err, result, fields) {
+            con.query("SELECT * FROM challenges WHERE id = ?", [req.params['id']], function (err, challenge, fields) {
                 if (err) throw err;
             });
-            con.query("SELECT * FROM questions WHERE challengeId = ?", [req.params['id']], function (err, result, fields) {
+            con.query("SELECT * FROM questions WHERE challengeId = ?", [req.params['id']], function (err, questions, fields) {
                 if (err) throw err;
                 result.map((question, index) => {
-                    con.query("SELECT * FROM answers WHERE questionId = ?", [question.id], function (err, result, fields) {
-                        if (err) throw err;
-                    });
+                    let questionData = { ...question }
+                    new Promise((resolve, reject) => {
+                        con.query("SELECT * FROM answers WHERE questionId = ?", [question.id], function (err, answers, fields) {
+                            if (err) throw err;
+                            questionData.answers = answers
+                        });
+                    }).then(() => {
+                        challenge.questions.push(questionData)
+                    })
                 })
             });
-            con.query("SELECT * FROM checkpoints WHERE challengeId = ?", [req.params['id']], function (err, result, fields) {
+            con.query("SELECT * FROM checkpoints WHERE challengeId = ?", [req.params['id']], function (err, checkpoints, fields) {
                 if (err) throw err;
-                result.map((checkpoint, index) => {
-                    con.query("SELECT * FROM references WHERE checkpointId = ?", [checkpoint.id], function (err, result, fields) {
-                        if (err) throw err;
-                    });
+                checkpoints.map((checkpoint, index) => {
+                    let checkpointData = { ...checkpoint }
+                    new Promise((resolve, reject) => {
+                        con.query("SELECT * FROM references WHERE checkpointId = ?", [checkpoint.id], function (err, references, fields) {
+                            if (err) throw err;
+                            checkpointData.references = references
+                        });
+                    }).then(() => {
+                        challenge.checkpoints.push(checkpointData)
+                    })
                 })
             });
         });
+    }).then(() => {
+        res.send(challenge)
     })
 })
 
