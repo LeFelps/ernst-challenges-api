@@ -152,8 +152,9 @@ router.get('/:id', (req, res) => {
     new Promise((resolve, reject) => {
         con.connect(function (err) {
             if (err) throw err;
-            con.query("SELECT * FROM challenges WHERE id = ?", [req.params['id']], function (err, challenge, fields) {
+            con.query("SELECT * FROM challenges WHERE id = ?", [req.params['id']], function (err, result, fields) {
                 if (err) throw err;
+                challenge = { ...challenge, ...result }
             });
             con.query("SELECT * FROM questions WHERE challengeId = ?", [req.params['id']], function (err, questions, fields) {
                 if (err) throw err;
