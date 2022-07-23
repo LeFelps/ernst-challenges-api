@@ -139,20 +139,7 @@ router.get('/', (req, res) => {
         if (err) throw err;
         con.query("SELECT * FROM challenges", function (err, result, fields) {
             if (err) throw err;
-            con.query(`SELECT * FROM questions ${result.map((challenge, index) => (
-                `${index !== 0 ? "OR" : "WHERE"} challengeId = ${challenge.id}`
-            ))
-                }`, function (err, result, fields) {
-                    if (err) throw err;
-
-                });
-            con.query(`SELECT * FROM checkpoints ${result.map((challenge, index) => (
-                `${index !== 0 ? "OR" : "WHERE"} challengeId = ${challenge.id}`
-            ))
-                }`, function (err, result, fields) {
-                    if (err) throw err;
-
-                });
+            res.send(result)
         });
     });
 })
@@ -167,37 +154,30 @@ router.get('/:id', (req, res) => {
     new Promise((resolve, reject) => {
         con.connect(function (err) {
             if (err) throw err;
+
             con.query("SELECT * FROM challenges WHERE id = ?", [req.params['id']], function (err, result, fields) {
                 if (err) throw err;
-                challenge = { ...challenge, ...result }
-            });
-            con.query("SELECT * FROM questions WHERE challengeId = ?", [req.params['id']], function (err, questions, fields) {
-                if (err) throw err;
-                result.map((question, index) => {
-                    let questionData = { ...question }
-                    new Promise((resolve, reject) => {
-                        con.query("SELECT * FROM answers WHERE questionId = ?", [question.id], function (err, answers, fields) {
+                challenge = { ...result }
+                con.query(`SELECT * FROM questions WHERE challengeId = ${req.params['id']}`, function (err, result, fields) {
+                    if (err) throw err;
+                    con.query(`SELECT * FROM answers ${result.map((question, index) => (
+                        `${index !== 0 ? "OR" : "WHERE"} questionId = ${question.id}`
+                    ))
+                        }`, function (err, result, fields) {
                             if (err) throw err;
-                            questionData.answers = answers
+
                         });
-                    }).then(() => {
-                        challenge.questions.push(questionData)
-                    })
-                })
-            });
-            con.query("SELECT * FROM checkpoints WHERE challengeId = ?", [req.params['id']], function (err, checkpoints, fields) {
-                if (err) throw err;
-                checkpoints.map((checkpoint, index) => {
-                    let checkpointData = { ...checkpoint }
-                    new Promise((resolve, reject) => {
-                        con.query("SELECT * FROM references WHERE checkpointId = ?", [checkpoint.id], function (err, references, fields) {
+                });
+                con.query(`SELECT * FROM checkpoints WHERE challengeId = ${req.params['id']}`, function (err, result, fields) {
+                    if (err) throw err;
+                    con.query(`SELECT * FROM sources ${result.map((checkpoint, index) => (
+                        `${index !== 0 ? "OR" : "WHERE"} checkpointId = ${checkpoint.id}`
+                    ))
+                        }`, function (err, result, fields) {
                             if (err) throw err;
-                            checkpointData.references = references
+
                         });
-                    }).then(() => {
-                        challenge.checkpoints.push(checkpointData)
-                    })
-                })
+                });
             });
         });
     }).then(() => {
