@@ -160,22 +160,30 @@ router.get('/:id', (req, res) => {
                 challenge = { ...result }
                 con.query(`SELECT * FROM questions WHERE challengeId = ${req.params['id']}`, function (err, result, fields) {
                     if (err) throw err;
+                    challenge.questions = result
                     con.query(`SELECT * FROM answers ${result.map((question, index) => (
                         `${index !== 0 ? "OR" : "WHERE"} questionId = ${question.id}`
                     ))
                         }`, function (err, result, fields) {
                             if (err) throw err;
-
+                            let answers = result
+                            challenge?.questions.map((question, index) => {
+                                challenge.questions[index] = answers.filter(a => a.questionId === question.id)
+                            })
                         });
                 });
                 con.query(`SELECT * FROM checkpoints WHERE challengeId = ${req.params['id']}`, function (err, result, fields) {
                     if (err) throw err;
+                    challenge.checkpoints = result
                     con.query(`SELECT * FROM sources ${result.map((checkpoint, index) => (
                         `${index !== 0 ? "OR" : "WHERE"} checkpointId = ${checkpoint.id}`
                     ))
                         }`, function (err, result, fields) {
                             if (err) throw err;
-
+                            let sources = result
+                            challenge?.checkpoints.map((checkpoint, index) => {
+                                challenge.checkpoints[index] = sources.filter(a => a.checkpointId === checkpoint.id)
+                            })
                         });
                 });
             });
