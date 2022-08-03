@@ -74,11 +74,18 @@ router.get('/', (req, res) => {
 
 router.get('/:id', (req, res) => {
     const con = connectDB()
+
+    let job = {}
     con.connect(function (err) {
         if (err) throw err;
         con.query("SELECT * FROM jobs WHERE id = ?", [req.params['id']], function (err, result, fields) {
             if (err) throw err;
-            res.send(result)
+            job = { ...result[0] }
+            con.query("SELECT * FROM categories WHERE id = ?", [job.categoryId], function (err, result, fields) {
+                if (err) throw err;
+                job.category = { ...result[0] }
+                res.send(job)
+            });
         });
     });
 })
