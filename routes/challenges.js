@@ -261,6 +261,7 @@ router.get('/:id', (req, res) => {
     const con = connectDB()
 
     let challenge = {
+        category: {},
         checkpoints: [],
         questions: []
     }
@@ -271,6 +272,9 @@ router.get('/:id', (req, res) => {
             resolve({ ...result[0] })
         });
     }).then(response => {
+        challenge = {
+            ...response,
+        }
         Promise.all([
             new Promise((resolve, reject) => {
                 con.query("SELECT * FROM categories WHERE id = ?", [response.categoryId], function (err, result, fields) {
