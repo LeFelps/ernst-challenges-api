@@ -6,10 +6,19 @@ const router = express.Router();
 
 router.get('/', (req, res) => {
     const con = connectDB()
-    con.query("SELECT * FROM users WHERE username = ? AND password = ?", [req.username, req.password], function (err, result, fields) {
-        if (err) throw err;
 
-        if (result.length > 0) res.send(true)
+    const reqBody = req.body
+    con.query("SELECT * FROM users WHERE username = ? AND password = ?", [reqBody.username, reqBody.password], function (err, result, fields) {
+        if (err) throw err;
+        if (result.length > 0) {
+            const user = result[0]
+            res.send({
+                id: user.id,
+                name: user.username,
+                email: user.email,
+                lastLogin: Date.now(),
+            })
+        }
         else res.send(false)
     });
 })
@@ -26,7 +35,7 @@ router.put('/', (req, res) => {
     const con = connectDB()
     // TODO 
     // Add all values for users PUT endpoint 
-    con.query(`UPDATE SET languages = ? WHERE id = ${user.id}`, [user.languages, req.password], function (err, result, fields) {
+    con.query(`UPDATE SET users = ? WHERE id = ${user.id}`, [user.languages, req.password], function (err, result, fields) {
         if (err) throw err;
         res.send(user)
     });
@@ -34,9 +43,16 @@ router.put('/', (req, res) => {
 
 router.post('/', (req, res) => {
     const con = connectDB()
-    con.query("INSERT INTO users (email, password, username) VALUES (?, ?, ?)", [req.username, req.password], function (err, result, fields) {
-        if (err) throw err;
 
+    const reqBody = req.body
+    con.query("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", [reqBody.username, reqBody.email, reqBody.password], function (err, result, fields) {
+        if (err) throw err;
+        res.send({
+            id: result.insertId,
+            name: reqBody.username,
+            email: reqBody.email,
+            lastLogin: Date.now(),
+        })
     });
 })
 
