@@ -120,6 +120,9 @@ router.post('/', (req, res) => {
     });
 })
 
+
+// Check for missing items and delete from database
+// ex. DELETE FROM answers WHERE questionID=# AND id!=# AND id!=#...
 router.put('/', (req, res) => {
     const con = connectDB()
 
@@ -226,7 +229,7 @@ router.post('/categories', (req, res) => {
             [category.name, category.accentColor],
             function (err, result, fields) {
                 if (err) throw err;
-                res.send({ id: result.insertId, ...category })
+                res.send({ ...category, id: result.insertId })
             });
     });
 })
@@ -244,7 +247,6 @@ router.put('/categories', (req, res) => {
             });
     });
 })
-
 
 router.get('/', (req, res) => {
     const con = connectDB()
@@ -321,7 +323,8 @@ router.get('/:id', (req, res) => {
 
                             let checkpointList = [...checkpointResult]
                             checkpointList.map((checkpoint, index) => {
-                                checkpointList[index].answers = sourceResult.filter(s => s.checkpointId === checkpoint.id)
+                                checkpoint.technologies = checkpoint.technologies?.split?.(';')
+                                checkpointList[index].references = sourceResult.filter(s => s.checkpointId === checkpoint.id)
                                 return
                             })
 

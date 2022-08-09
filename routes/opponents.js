@@ -60,7 +60,17 @@ router.get('/', (req, res) => {
             res.send(result)
         });
     });
-    res.send()
+})
+
+router.get('/random', (req, res) => {
+    const con = connectDB()
+    con.connect(function (err) {
+        if (err) throw err;
+        con.query("SELECT * FROM opponents ORDER BY RAND() LIMIT 1 ", function (err, result, fields) {
+            if (err) throw err;
+            res.send(result[0])
+        });
+    });
 })
 
 router.get('/:id', (req, res) => {
@@ -69,7 +79,7 @@ router.get('/:id', (req, res) => {
         if (err) throw err;
         con.query("SELECT * FROM opponents WHERE id = ?", [req.params['id']], function (err, result, fields) {
             if (err) throw err;
-            res.send(result)
+            res.send(result[0])
         });
     });
 })

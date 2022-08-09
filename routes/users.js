@@ -4,7 +4,7 @@ import connectDB from '../database/connection.js'
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
+router.post('/login', (req, res) => {
     const con = connectDB()
 
     const reqBody = req.body
@@ -41,7 +41,7 @@ router.put('/', (req, res) => {
     });
 })
 
-router.post('/', (req, res) => {
+router.post('/signup', (req, res) => {
     const con = connectDB()
 
     const reqBody = req.body
