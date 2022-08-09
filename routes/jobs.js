@@ -18,15 +18,15 @@ router.post('/', (req, res) => {
         responsabilities: reqBody.responsabilities,
         compensations: reqBody.compensations,
         requirements: reqBody.requirements,
-        companyName: reqBody.requirements,
+        companyName: reqBody.companyName,
         salary: reqBody.salary,
         hideSalary: reqBody.hideSalary,
     }
 
     con.connect(function (err) {
         if (err) throw err;
-        con.query("INSERT INTO jobs (categoryId, title, level, location, remote, description, responsabilities, compensations, requirements, companyName, salary, hideSalary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [job.categoryId, job.title, job.level, job.location, job.remote, job.description, job.responsabilities, job.compensations, job.requirements, job.companyName, job.salary, job.hideSalary],
+        con.query("INSERT INTO jobs (categoryId, title, level, location, remote, description, responsabilities, compensations, requirements, companyName, salary, hideSalary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [job.categoryId, job.title, job.level, job.location, job.remote, job.description, job.responsabilities.join(";"), job.compensations.join(";"), job.requirements.join(";"), job.companyName, job.salary, job.hideSalary],
             function (err, result, fields) {
                 if (err) throw err;
                 res.send({ id: result.insertId, ...job })
