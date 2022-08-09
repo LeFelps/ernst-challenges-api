@@ -72,7 +72,15 @@ router.get('/', (req, res) => {
         if (err) throw err;
         con.query("SELECT * FROM jobs", function (err, result, fields) {
             if (err) throw err;
-            res.send(result)
+            let jobs = result
+            con.query("SELECT * FROM categories ", function (err, result, fields) {
+                if (err) throw err;
+                const categories = result
+                jobs.map((job, index) => {
+                    jobs[index].category = categories.find(c => c.id === job.categoryId)
+                })
+                res.send(jobs)
+            });
         });
     });
 })
@@ -86,6 +94,12 @@ router.get('/:id', (req, res) => {
         con.query("SELECT * FROM jobs WHERE id = ?", [req.params['id']], function (err, result, fields) {
             if (err) throw err;
             job = { ...result[0] }
+            job = {
+                ...job,
+                requirements: job?.requirements?.split(";"),
+                compensations: job?.compensations?.split(";"),
+                responsabilities: job?.responsabilities?.split(";")
+            }
             con.query("SELECT * FROM categories WHERE id = ?", [job.categoryId], function (err, result, fields) {
                 if (err) throw err;
                 job.category = { ...result[0] }
