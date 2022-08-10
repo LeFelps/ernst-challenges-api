@@ -6,6 +6,8 @@ import usersRoutes from './routes/users.js'
 import challengesRoutes from './routes/challenges.js'
 import jobsRoutes from './routes/jobs.js'
 import opponentsRoutes from './routes/opponents.js'
+import jobApplicationRoutes from './routes/jobApplicationRoutes.js'
+import challengeSubmissionsRoutes from './routes/challengeSubmissionsRoutes.js'
 
 const app = express();
 const PORT = 5000;
@@ -20,6 +22,8 @@ app.use(function (req, res, next) {
 });
 
 app.use('/users', usersRoutes)
+app.use('/job-applications', jobApplicationRoutes)
+app.use('/challenge-submissions', challengeSubmissionsRoutes)
 app.use('/challenges', challengesRoutes)
 app.use('/jobs', jobsRoutes)
 app.use('/opponents', opponentsRoutes)
