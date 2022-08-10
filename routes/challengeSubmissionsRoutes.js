@@ -19,6 +19,21 @@ router.post('/', (req, res) => {
     });
 })
 
+router.put('/', (req, res) => {
+    const con = connectDB()
+
+    const reqBody = req.body
+    con.query("UPDATE user_checkpoints SET link = ?, completed = ? WHERE userId = ? AND checkpointId = ?", [reqBody.link, reqBody.completed, reqBody.userId, reqBody.checkpointId], function (err, result, fields) {
+        if (err) throw err;
+        res.send({
+            userId: reqBody.userId,
+            checkpointId: reqBody.checkpointId,
+            link: reqBody.link,
+            completed: reqBody.completed
+        })
+    });
+})
+
 router.get('/', (req, res) => {
     const con = connectDB()
 
