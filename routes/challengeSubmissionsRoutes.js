@@ -26,8 +26,13 @@ router.get('/', (req, res) => {
     const challengeId = req.query?.challengeId
 
     const reqBody = req.body
-    con.query("SELECT user_checkpoints.checkpointId, user_checkpoints.link, user_checkpoints.completed FROM users INNER JOIN checkpoints ON user_checkpoints.checkpointId = checkpoint.id WHERE user_checkpoints.userId = ? ANDcheckpoint.challengeId", [userId, challengeId], function (err, result, fields) {
+    con.query("SELECT user_checkpoints.checkpointId, user_checkpoints.link, user_checkpoints.completed FROM user_checkpoints INNER JOIN checkpoints ON user_checkpoints.checkpointId = checkpoints.id WHERE user_checkpoints.userId = ? AND checkpoints.challengeId", [userId, challengeId], function (err, result, fields) {
         if (err) throw err;
+
+        result.map((s, index) => {
+            result[index].existing = true
+        })
+
         res.send(result)
     });
 })

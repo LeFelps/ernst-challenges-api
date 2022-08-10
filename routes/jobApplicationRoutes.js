@@ -18,6 +18,21 @@ router.post('/', (req, res) => {
     });
 })
 
+router.get('/', (req, res) => {
+    const con = connectDB()
+
+    const userId = req.query?.userId
+    const jobId = req.query?.jobId
+
+    const reqBody = req.body
+    con.query("SELECT * FROM user_applications WHERE userId = ? AND jobId", [userId, jobId], function (err, result, fields) {
+        if (err) throw err;
+
+        const response = result.length > 0
+        res.send(response)
+    });
+})
+
 router.get('/:id', (req, res) => {
     const con = connectDB()
 
