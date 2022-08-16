@@ -42,10 +42,11 @@ router.put('/', (req, res) => {
         languages: reqBody.languages,
         experience: reqBody.experience,
         education: reqBody.education,
+        categoryId: reqBody.category?.id
     }
 
     const con = connectDB()
-    const query = `UPDATE users SET fullName = ?, email = ?, phone = ?, jobTitle = ?, jobLevel = ?, skills = ?, languages = ?, experience = ?, education = ? WHERE id = ${user.id}`
+    const query = `UPDATE users SET fullName = ?, email = ?, phone = ?, jobTitle = ?, jobLevel = ?, skills = ?, languages = ?, experience = ?, education = ?, categoryId = ? WHERE id = ${user.id}`
 
     con.query(query, [
         user.fullName,
@@ -53,10 +54,11 @@ router.put('/', (req, res) => {
         user.phone,
         user.jobTitle,
         user.jobLevel,
-        JSON.stringify(user.skills),
-        JSON.stringify(user.languages),
-        JSON.stringify(user.experience),
-        JSON.stringify(user.education)
+        user.skills ? JSON.stringify(user.skills) : null,
+        user.languages ? JSON.stringify(user.languages) : null,
+        user.experience ? JSON.stringify(user.experience) : null,
+        user.education ? JSON.stringify(user.education) : null,
+        user.categoryId
     ], function (err, result, fields) {
         if (err) throw err;
         res.send(user)
@@ -91,18 +93,26 @@ router.get('/:id', (req, res) => {
 
     con.query(`SELECT * FROM users WHERE id = ${req.params['id']}`, function (err, result, fields) {
         if (err) throw err;
-
         let user = { ...result[0] }
-        user = {
-            ...user,
-            skills: JSON.parse(user.skills),
-            languages: JSON.parse(user.languages),
-            experience: JSON.parse(user.experience),
-            education: JSON.parse(user.education)
-        }
 
-        res.send(result[0])
-        con.end()
+        con.query(`SELECT * FROM categories WHERE id = ${user.categoryId}`, function (err, result, fields) {
+            if (err) throw err;
+
+
+
+            user = {
+                ...user,
+                skills: JSON.parse(user?.skills),
+                languages: JSON.parse(user?.languages),
+                experience: JSON.parse(user?.experience),
+                education: JSON.parse(user?.education),
+                category: result[0]
+            }
+
+            res.send(user)
+            con.end()
+        });
+
     });
 })
 
