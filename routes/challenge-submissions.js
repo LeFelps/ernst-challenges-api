@@ -16,6 +16,7 @@ router.post('/', (req, res) => {
             link: reqBody.link,
             completed: reqBody.completed
         })
+        con.end()
     });
 })
 
@@ -31,6 +32,7 @@ router.put('/', (req, res) => {
             link: reqBody.link,
             completed: reqBody.completed
         })
+        con.end()
     });
 })
 
@@ -49,6 +51,7 @@ router.get('/', (req, res) => {
         })
 
         res.send(result)
+        con.end()
     });
 })
 
@@ -101,11 +104,15 @@ router.get('/:id', (req, res) => {
                 })
 
                 res.send(challenges)
+                con.end()
             }).catch(err => {
                 console.log(err)
                 res.send([])
+                con.end()
             })
-        } else res.send([])
+        } else {
+            res.send([])
+            con.end()}
     });
 })
 
@@ -116,6 +123,7 @@ router.delete('/', (req, res) => {
     con.query("UPDATE user_checkpoints SET link = ?, completed = ? WHERE userId = ? AND checkpointId = ?", [reqBody.link, reqBody.completed, reqBody.userId, reqBody.checkpointId], function (err, result, fields) {
         if (err) throw err;
         res.send(result)
+        con.end()
     });
 })
 

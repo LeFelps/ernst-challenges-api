@@ -22,6 +22,7 @@ router.post('/', (req, res) => {
             function (err, result, fields) {
                 if (err) throw err;
                 res.send({ id: result.insertId, ...opponent })
+                con.end()
             });
     });
 })
@@ -46,6 +47,7 @@ router.put('/', (req, res) => {
             function (err, result, fields) {
                 if (err) throw err;
                 res.send({ ...opponent })
+                con.end()
             });
     });
 })
@@ -58,6 +60,7 @@ router.get('/', (req, res) => {
         con.query("SELECT * FROM opponents", function (err, result, fields) {
             if (err) throw err;
             res.send(result)
+            con.end()
         });
     });
 })
@@ -69,6 +72,7 @@ router.get('/random', (req, res) => {
         con.query("SELECT * FROM opponents ORDER BY RAND() LIMIT 1 ", function (err, result, fields) {
             if (err) throw err;
             res.send(result[0])
+            con.end()
         });
     });
 })
@@ -80,6 +84,7 @@ router.get('/:id', (req, res) => {
         con.query("SELECT * FROM opponents WHERE id = ?", [req.params['id']], function (err, result, fields) {
             if (err) throw err;
             res.send(result[0])
+            con.end()
         });
     });
 })

@@ -6,8 +6,8 @@ import usersRoutes from './routes/users.js'
 import challengesRoutes from './routes/challenges.js'
 import jobsRoutes from './routes/jobs.js'
 import opponentsRoutes from './routes/opponents.js'
-import jobApplicationRoutes from './routes/jobApplicationRoutes.js'
-import challengeSubmissionsRoutes from './routes/challengeSubmissionsRoutes.js'
+import jobApplicationRoutes from './routes/job-applications.js'
+import challengeSubmissionsRoutes from './routes/challenge-submissions.js'
 
 const app = express();
 const PORT = 5000;

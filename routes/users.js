@@ -8,7 +8,7 @@ router.post('/login', (req, res) => {
     const con = connectDB()
 
     const reqBody = req.body
-    con.query("SELECT * FROM users WHERE username = ? AND password = ?", [reqBody.username, reqBody.password], function (err, result, fields) {
+    con.query("SELECT * FROM users WHERE username = ? AND password = ?", [String(reqBody.username).toLowerCase(), reqBody.password], function (err, result, fields) {
         if (err) throw err;
         if (result.length > 0) {
             const user = result[0]
@@ -18,8 +18,12 @@ router.post('/login', (req, res) => {
                 email: user.email,
                 lastLogin: Date.now(),
             })
+            con.end()
         }
-        else res.send(false)
+        else {
+            res.send(false)
+            con.end()
+        }
     });
 })
 
@@ -29,25 +33,34 @@ router.put('/', (req, res) => {
 
     const user = {
         id: reqBody.id,
-        languages: reqBody.languages
+        fullName: reqBody.fullName,
+        email: reqBody.email,
+        phone: reqBody.phone,
+        jobTitle: reqBody.jobTitle,
+        jobLevel: reqBody.jobLevel,
+        skills: reqBody.skills,
+        languages: reqBody.languages,
+        experience: reqBody.experience,
+        education: reqBody.education,
     }
 
     const con = connectDB()
-    // TODO 
-    // Add all values for users PUT endpoint 
-    con.query(`UPDATE users SET fullName, phone, categoryId, level, points, jobPosition, public WHERE id = ${user.id}`, [user.languages, req.password], function (err, result, fields) {
+    const query = `UPDATE users SET fullName = ?, email = ?, phone = ?, jobTitle = ?, jobLevel = ?, skills = ?, languages = ?, experience = ?, education = ? WHERE id = ${user.id}`
+
+    con.query(query, [
+        user.fullName,
+        user.email,
+        user.phone,
+        user.jobTitle,
+        user.jobLevel,
+        JSON.stringify(user.skills),
+        JSON.stringify(user.languages),
+        JSON.stringify(user.experience),
+        JSON.stringify(user.education)
+    ], function (err, result, fields) {
         if (err) throw err;
         res.send(user)
-    });
-})
-
-router.get('/:id', (req, res) => {
-    const con = connectDB()
-
-    const reqBody = req.body
-    con.query(`SELECT * FROM users WHERE id = ${req.prarms['id']}`, function (err, result, fields) {
-        if (err) throw err;
-        res.send(result[0])
+        con.end()
     });
 })
 
@@ -58,6 +71,38 @@ router.get('/', (req, res) => {
     con.query("SELECT * FROM users", function (err, result, fields) {
         if (err) throw err;
         res.send(result)
+        con.end()
+    });
+})
+
+router.get('/public', (req, res) => {
+    const con = connectDB()
+
+    const reqBody = req.body
+    con.query("SELECT * FROM users WHERE public = true", function (err, result, fields) {
+        if (err) throw err;
+        res.send(result)
+        con.end()
+    });
+})
+
+router.get('/:id', (req, res) => {
+    const con = connectDB()
+
+    con.query(`SELECT * FROM users WHERE id = ${req.params['id']}`, function (err, result, fields) {
+        if (err) throw err;
+
+        let user = { ...result[0] }
+        user = {
+            ...user,
+            skills: JSON.parse(user.skills),
+            languages: JSON.parse(user.languages),
+            experience: JSON.parse(user.experience),
+            education: JSON.parse(user.education)
+        }
+
+        res.send(result[0])
+        con.end()
     });
 })
 
@@ -65,7 +110,7 @@ router.post('/signup', (req, res) => {
     const con = connectDB()
 
     const reqBody = req.body
-    con.query("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", [reqBody.username, reqBody.email, reqBody.password], function (err, result, fields) {
+    con.query("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", [String(reqBody.username).toLowerCase(), reqBody.email, reqBody.password], function (err, result, fields) {
         if (err) throw err;
         res.send({
             id: result.insertId,
@@ -73,7 +118,9 @@ router.post('/signup', (req, res) => {
             email: reqBody.email,
             lastLogin: Date.now(),
         })
+        con.end()
     });
 })
+
 
 export default router

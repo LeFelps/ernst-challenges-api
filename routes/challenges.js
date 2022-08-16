@@ -113,6 +113,7 @@ router.post('/', (req, res) => {
                     })
                 ]).then(resp => {
                     res.send(challenge)
+                    con.end()
                 }).catch(err => {
 
                 })
@@ -212,9 +213,11 @@ router.get('/categories', (req, res) => {
                         return category
                     })
                     res.send(fullCategories)
+                    con.end()
                 });
             } else {
                 res.send(result)
+                con.end()
             }
         });
     });
@@ -230,6 +233,7 @@ router.post('/categories', (req, res) => {
             function (err, result, fields) {
                 if (err) throw err;
                 res.send({ ...category, id: result.insertId })
+                con.end()
             });
     });
 })
@@ -244,6 +248,7 @@ router.put('/categories', (req, res) => {
             function (err, result, fields) {
                 if (err) throw err;
                 res.send({ ...category })
+                con.end()
             });
     });
 })
@@ -255,6 +260,7 @@ router.get('/', (req, res) => {
         con.query("SELECT * FROM challenges", function (err, result, fields) {
             if (err) throw err;
             res.send(result)
+            con.end()
         });
     });
 })
@@ -323,7 +329,7 @@ router.get('/:id', (req, res) => {
 
                             let checkpointList = [...checkpointResult]
                             checkpointList.map((checkpoint, index) => {
-                                checkpoint.technologies = checkpoint.technologies?.split?.(';')
+                                checkpoint.technologies = JSON.parse(checkpoint.technologies)
                                 checkpointList[index].references = sourceResult.filter(s => s.checkpointId === checkpoint.id)
                                 return
                             })
@@ -349,6 +355,7 @@ router.get('/:id', (req, res) => {
             }
 
             res.send(challenge)
+            con.end()
 
         }).catch(err => {
 

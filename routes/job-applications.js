@@ -1,9 +1,7 @@
 import express from "express";
 import connectDB from '../database/connection.js'
 
-
 const router = express.Router();
-
 
 router.post('/', (req, res) => {
     const con = connectDB()
@@ -15,23 +13,26 @@ router.post('/', (req, res) => {
             userId: reqBody.userId,
             jobId: reqBody.jobId
         })
+        con.end()
     });
 })
 
 router.get('/:id', (req, res) => {
     const con = connectDB()
 
+    const userId = req.params['id']
     const jobId = req.query?.jobId
 
-    const reqBody = req.body
-
-    let query = `SELECT * from user_applications WHERE userId = ${req.params['id']}`
+    let query = `SELECT * from user_applications WHERE userId = ${userId}`
     if (jobId) query += ` AND jobId = ${jobId}`
 
     con.query(query, function (err, result, fields) {
         if (err) throw err;
 
-        if (jobId) res.send(result.length > 0)
+        if (jobId) {
+            res.send(result.length > 0)
+            con.end()
+        }
         else {
             let jobIds = []
 
@@ -48,29 +49,34 @@ router.get('/:id', (req, res) => {
                     query += `${index !== 0 ? 'OR' : ''} jobs.id = ${id} `
                 })
 
-                con.query(query, [reqBody.userId, reqBody.jobId], function (err, result, fields) {
+                con.query(query, [userId, jobId], function (err, result, fields) {
                     if (err) throw err;
 
                     result.map((job, index) => {
-                        result[index].compensations = job.compensations.split(";")
+                        result[index].compensations = JSON.parse(job.compensations)
                     })
 
                     res.send(result)
+                    con.end()
                 });
-            } else res.send([])
+            } else {
+                res.send([])
+                con.end()
+            }
         }
-
-
     });
 })
 
 router.delete('/', (req, res) => {
     const con = connectDB()
 
-    const reqBody = req.body
-    con.query("DELETE FROM   user_applications WHERE userId = ? AND jobId = ?", [reqBody.userId, reqBody.jobId], function (err, result, fields) {
+    const userId = req.query?.userId
+    const jobId = req.query?.jobId
+
+    con.query("DELETE FROM user_applications WHERE userId = ? AND jobId = ?", [userId, jobId], function (err, result, fields) {
         if (err) throw err;
         res.send(result)
+        con.end()
     });
 })
 
