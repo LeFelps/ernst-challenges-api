@@ -36,7 +36,7 @@ router.post('/', (req, res) => {
                                 challenge.questions.map((question, q_index) => {
                                     return new Promise((resolve, reject) => {
                                         con.query("INSERT INTO questions (challengeId, title, type, level) VALUES (?, ?, ?, ?)",
-                                            [result.insertId, question.title, question.type, question.level],
+                                            [challenge.id, question.title, question.type, question.level],
                                             function (err, result, fields) {
                                                 if (err) reject(err);
 
@@ -46,7 +46,6 @@ router.post('/', (req, res) => {
                                                     question.answers.map((answer, a_index) => {
                                                         answerList.push([result.insertId, answer.type, answer.value, answer.correctAnswer])
                                                     })
-                                                    console.log(answerList)
                                                     con.query(`INSERT INTO answers (questionId, type, value, correctAnswer) VALUES ${answerList.map(answer => (
                                                         `(${answer[0]},'${answer[1]}','${answer[2]}',${answer[3]})`
                                                     ))}`,
@@ -76,25 +75,16 @@ router.post('/', (req, res) => {
                             Promise.all([
                                 challenge.checkpoints.map((checkpoint, c_index) => {
                                     return new Promise((resolve, reject) => {
-                                        con.query("INSERT INTO checkpoints (challengeId, description, technologies) VALUES (?, ?, ?)",
-                                            [result.insertId, checkpoint.description, checkpoint.technologies ? checkpoint.technologies.join(';') : ""],
+                                        con.query("INSERT INTO checkpoints (challengeId, description, technologies, sources) VALUES (?, ?, ?, ?)",
+                                            [
+                                                challenge.id,
+                                                checkpoint.description,
+                                                checkpoint.technologies ? JSON.stringify(checkpoint.technologies) : null,
+                                                checkpoint.sources ? JSON.stringify(checkpoint.sources) : null,
+                                            ],
                                             function (err, result, fields) {
                                                 if (err) reject(err);
                                                 challenge.checkpoints[c_index].id = result.insertId
-                                                let referenceList = []
-                                                if (checkpoint.references?.length > 0) {
-                                                    checkpoint.references.map((reference, r_index) => {
-                                                        referenceList.push([result.insertId, reference.title, reference.link])
-                                                        challenge.checkpoints[c_index].id = result.insertId
-                                                    })
-                                                    con.query(`INSERT INTO sources (checkpointId, title, link) VALUES ${referenceList.map(reference => (
-                                                        `(${reference[0]},'${reference[1]}','${reference[2]}')`
-                                                    ))}`,
-                                                        function (err, result, fields) {
-                                                            if (err) reject(err);
-                                                            resolve(result)
-                                                        });
-                                                }
                                             });
                                     }).then(response => {
                                         resolve()
@@ -154,7 +144,7 @@ router.put('/', (req, res) => {
                     challenge.questions.map((question, q_index) => {
                         con.query(question.id ? `UPDATE questions SET challengeId = ?, title = ?, type = ?, level = ? WHERE id = ${question.id}`
                             : "INSERT INTO questions (challengeId, title, type, level) VALUES (?, ?, ?, ?)",
-                            [result.insertId, question.title, question.type, question.level],
+                            [challenge.id, question.title, question.type, question.level],
                             function (err, result, fields) {
                                 if (err) throw err;
                                 challenge.questions[q_index].id = result.insertId
@@ -175,18 +165,18 @@ router.put('/', (req, res) => {
                     challenge.checkpoints.map((checkpoint, c_index) => {
                         con.query(checkpoint.id ? `UPDATE checkpoints SET challengeId = ?, description = ?, technologies = ? WHERE id = ${checkpoint.id}`
                             : "INSERT INTO checkpoints (challengeId, description, technologies) VALUES (?, ?, ?)",
-                            [result.insertId, checkpoint.description, checkpoint.technologies ? checkpoint.technologies.join(';') : ""],
+                            [challenge.id, checkpoint.description, checkpoint.technologies ? checkpoint.technologies.join(';') : ""],
                             function (err, result, fields) {
                                 if (err) throw err;
                                 challenge.checkpoints[c_index].id = result.insertId
-                                if (checkpoint.references?.length > 0)
-                                    checkpoint.references.map((reference, r_index) => {
-                                        con.query(reference.id ? `UPDATE sources SET checkpointId = ?, title = ?, link = ? WHERE id = ${reference.id}`
+                                if (checkpoint.sources?.length > 0)
+                                    checkpoint.sources.map((source, r_index) => {
+                                        con.query(source.id ? `UPDATE sources SET checkpointId = ?, title = ?, link = ? WHERE id = ${source.id}`
                                             : "INSERT INTO sources (checkpointId, title, link) VALUES (?, ?, ?)",
-                                            [result.insertId, reference.title, reference.link],
+                                            [result.insertId, source.title, source.link],
                                             function (err, result, fields) {
                                                 if (err) throw err;
-                                                challenge.checkpoints[c_index].references[r_index].id = result.insertId
+                                                challenge.checkpoints[c_index].sources[r_index].id = result.insertId
                                             });
                                     })
                             });
@@ -320,25 +310,14 @@ router.get('/:id', (req, res) => {
                     if (err) reject(err);
 
                     if (checkpointResult.length > 0) {
-                        let query = 'SELECT * FROM sources WHERE'
-                        checkpointResult.map((checkpoint, index) => (
-                            query += `${index !== 0 ? ' OR' : ''} checkpointId=${checkpoint.id}`
-                        ))
-                        con.query(query, [response.categoryId], function (err, sourceResult, fields) {
-                            if (err) reject(err);
-
-                            let checkpointList = [...checkpointResult]
-                            checkpointList.map((checkpoint, index) => {
-                                checkpoint.technologies = JSON.parse(checkpoint.technologies)
-                                checkpointList[index].references = sourceResult.filter(s => s.checkpointId === checkpoint.id)
-                                return
-                            })
-
-                            resolve([...checkpointList])
-
+                        checkpointResult.map((checkpoint, index) => {
+                            checkpointResult[index].sources = JSON.parse(checkpoint.sources)
+                            checkpointResult[index].technologies = JSON.parse(checkpoint.technologies)
+                            return checkpoint
                         })
-                    } else resolve([...checkpointResult])
+                    }
 
+                    resolve([...checkpointResult])
                 });
             })
         ]).then(([

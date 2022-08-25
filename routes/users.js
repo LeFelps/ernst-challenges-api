@@ -98,8 +98,6 @@ router.get('/:id', (req, res) => {
         con.query(`SELECT * FROM categories WHERE id = ${user.categoryId}`, function (err, result, fields) {
             if (err) throw err;
 
-
-
             user = {
                 ...user,
                 skills: JSON.parse(user?.skills),

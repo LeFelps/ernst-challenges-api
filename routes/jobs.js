@@ -41,7 +41,7 @@ router.put('/', (req, res) => {
     const reqBody = req.body
 
     const job = {
-        id: job.id,
+        id: reqBody.id,
         categoryId: reqBody.category?.id,
         title: reqBody.title,
         level: reqBody.level,
@@ -51,14 +51,15 @@ router.put('/', (req, res) => {
         responsabilities: reqBody.responsabilities,
         compensations: reqBody.compensations,
         requirements: reqBody.requirements,
-        businessName: reqBody.requirements,
+        companyName: reqBody.companyName,
         salary: reqBody.salary,
         hideSalary: reqBody.hideSalary,
     }
+
     con.connect(function (err) {
         if (err) throw err;
         con.query("UPDATE jobs SET categoryId = ?, title = ?, level = ?, location = ?, remote = ?, description = ?, responsabilities = ?, compensations = ?, requirements = ?, companyName = ?, salary = ?, hideSalary = ? WHERE id = ?",
-            [job.categoryId, job.title, job.level, job.location, job.remote, job.description, job.responsabilities, job.compensations, job.requirements, job.companyName, job.salary, job.hideSalary, job.id],
+            [job.categoryId, job.title, job.level, job.location, job.remote, job.description, JSON.stringify(job.responsabilities), JSON.stringify(job.compensations), JSON.stringify(job.requirements), job.companyName, job.salary, job.hideSalary, job.id],
             function (err, result, fields) {
                 if (err) throw err;
                 res.send({ ...job })
