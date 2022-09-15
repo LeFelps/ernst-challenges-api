@@ -66,6 +66,17 @@ router.put('/', (req, res) => {
     });
 })
 
+router.put('/change-visibility', (req, res) => {
+    const con = connectDB()
+
+    const reqBody = req.body
+    con.query("UPDATE users SET public = ? WHERE id = ?", [!reqBody.public, reqBody.id], function (err, result, fields) {
+        if (err) throw err;
+        res.send(!reqBody.public)
+        con.end()
+    });
+})
+
 router.get('/', (req, res) => {
     const con = connectDB()
 
@@ -81,8 +92,26 @@ router.get('/public', (req, res) => {
     const con = connectDB()
 
     const reqBody = req.body
-    con.query("SELECT * FROM users WHERE public = true", function (err, result, fields) {
+    con.query("SELECT * FROM users INNER JOIN categories ON categories.id = categoryId WHERE users.public = true", function (err, result, fields) {
         if (err) throw err;
+
+        let users = result
+
+        users.map((user, index) => {
+            users[index].skills = JSON.parse(user?.skills)
+            users[index].languages = JSON.parse(user?.languages)
+            users[index].experience = JSON.parse(user?.experience)
+            users[index].education = JSON.parse(user?.education)
+            users[index].category = {
+                accentColor: user.accentColor,
+                id: user.categoryId
+            }
+
+            delete user.categoryId
+            delete user.accentColor
+            return
+        })
+
         res.send(result)
         con.end()
     });

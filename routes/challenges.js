@@ -133,56 +133,76 @@ router.put('/', (req, res) => {
             checkpoints: reqBody.checkpoints
         }
 
-        con.query("UPDATE challenges SET categoryId = ?, title = ?, brief = ?, description = ?, icon = ? WHERE id = ?",
-            [challenge.categoryId, challenge.title, challenge.brief, challenge.description, challenge.icon, challenge.id],
-            function (err, result, fields) {
-                if (err) throw err;
-
-                challenge.id = result.insertId
-
-                challenge.questions?.length > 0 ?
-                    challenge.questions.map((question, q_index) => {
-                        con.query(question.id ? `UPDATE questions SET challengeId = ?, title = ?, type = ?, level = ? WHERE id = ${question.id}`
-                            : "INSERT INTO questions (challengeId, title, type, level) VALUES (?, ?, ?, ?)",
-                            [challenge.id, question.title, question.type, question.level],
-                            function (err, result, fields) {
-                                if (err) throw err;
-                                challenge.questions[q_index].id = result.insertId
-                                if (question?.options?.length > 0)
-                                    question.options.map((option, o_index) => {
-                                        con.query(option.id ? `UPDATE answers SET questionId = ?, type = ?, value = ?, correctAnswer = ? WHERE id = ${option.id}`
-                                            : "INSERT INTO answers (questionId, type, value, correctAnswer) VALUES (?, ?, ?, ?)",
-                                            [result.insertId, option.type, option.value, option.correctAnswer],
-                                            function (err, result, fields) {
-                                                if (err) throw err;
-                                                challenge.questions[q_index].options[o_index].id = result.insertId
-                                            });
-                                    })
-                            });
-                    })
-                    : challenge.questions = []
-                challenge.checkpoints?.length > 0 ?
-                    challenge.checkpoints.map((checkpoint, c_index) => {
-                        con.query(checkpoint.id ? `UPDATE checkpoints SET challengeId = ?, description = ?, technologies = ? WHERE id = ${checkpoint.id}`
-                            : "INSERT INTO checkpoints (challengeId, description, technologies) VALUES (?, ?, ?)",
-                            [challenge.id, checkpoint.description, checkpoint.technologies ? checkpoint.technologies.join(';') : ""],
-                            function (err, result, fields) {
-                                if (err) throw err;
-                                challenge.checkpoints[c_index].id = result.insertId
-                                if (checkpoint.sources?.length > 0)
-                                    checkpoint.sources.map((source, r_index) => {
-                                        con.query(source.id ? `UPDATE sources SET checkpointId = ?, title = ?, link = ? WHERE id = ${source.id}`
-                                            : "INSERT INTO sources (checkpointId, title, link) VALUES (?, ?, ?)",
-                                            [result.insertId, source.title, source.link],
-                                            function (err, result, fields) {
-                                                if (err) throw err;
-                                                challenge.checkpoints[c_index].sources[r_index].id = result.insertId
-                                            });
-                                    })
-                            });
-                    })
-                    : challenge.checkpoints = []
+        new Promise((resolve, reject) => {
+            con.query("UPDATE challenges SET categoryId = ?, title = ?, brief = ?, description = ?, icon = ? WHERE id = ?",
+                [challenge.categoryId, challenge.title, challenge.brief, challenge.description, challenge.icon, challenge.id],
+                function (err, result, fields) {
+                    if (err) reject(err);
+                    resolve(result)
+                })
+        }).then(res => {
+            Promise.all([
+                new Promise((resolve, reject) => {
+                    challenge.questions?.length > 0 ?
+                        Promise.all([
+                            challenge.questions.map((question, q_index) => {
+                                new Promise((resolve, reject) => {
+                                    con.query(question.id ? `UPDATE questions SET challengeId = ?, title = ?, type = ?, level = ? WHERE id = ${question.id}`
+                                        : "INSERT INTO questions (challengeId, title, type, level) VALUES (?, ?, ?, ?)",
+                                        [challenge.id, question.title, question.type, question.level],
+                                        function (err, result, fields) {
+                                            if (err) reject(err);
+                                            challenge.questions[q_index].id = result.insertId
+                                            if (question?.options?.length > 0) {
+                                                Promise.all([
+                                                    question.options.map((option, o_index) => {
+                                                        new Promise((resolve, reject) => {
+                                                            con.query(option.id ? `UPDATE answers SET questionId = ?, type = ?, value = ?, correctAnswer = ? WHERE id = ${option.id}`
+                                                                : "INSERT INTO answers (questionId, type, value, correctAnswer) VALUES (?, ?, ?, ?)",
+                                                                [result.insertId, option.type, option.value, option.correctAnswer],
+                                                                function (err, result, fields) {
+                                                                    if (err) reject(err);
+                                                                    challenge.questions[q_index].options[o_index].id = result.insertId
+                                                                    resolve()
+                                                                });
+                                                        })
+                                                    })
+                                                ]).then(res => {
+                                                    resolve()
+                                                })
+                                            } else resolve()
+                                        });
+                                })
+                            })
+                        ])
+                        : resolve([])
+                }),
+                new Promise((resolve, reject) => {
+                    challenge.checkpoints?.length > 0 ?
+                        Promise.all([
+                            challenge.checkpoints.map((checkpoint, c_index) => {
+                                con.query(checkpoint.id ? `UPDATE checkpoints SET challengeId = ?, description = ?, technologies = ? WHERE id = ${checkpoint.id}`
+                                    : "INSERT INTO checkpoints (challengeId, description, technologies, sources) VALUES (?, ?, ?, ?)",
+                                    [challenge.id, checkpoint.description, checkpoint.technologies ? JSON.stringify(checkpoint.technologies) : "[]", JSON.stringify(checkpoint.sources)],
+                                    function (err, result, fields) {
+                                        if (err) reject(err);
+                                        challenge.checkpoints[c_index].id = result.insertId
+                                        resolve()
+                                    });
+                            })
+                        ]).then(res => {
+                            resolve()
+                        }).catch(err => {
+                            reject(err)
+                        })
+                        : resolve([])
+                })
+            ]).then(res => {
+                res.send(challenge)
+            }).catch(err => {
             })
+        }).catch(err => {
+        })
     });
 })
 
@@ -253,7 +273,7 @@ router.get('/', (req, res) => {
             con.end()
         });
     });
-})
+}) 
 
 router.get('/:id', (req, res) => {
     const con = connectDB()
