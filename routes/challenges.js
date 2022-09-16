@@ -111,9 +111,6 @@ router.post('/', (req, res) => {
     });
 })
 
-
-// Check for missing items and delete from database
-// ex. DELETE FROM answers WHERE questionID=# AND id!=# AND id!=#...
 router.put('/', (req, res) => {
     const con = connectDB()
 
@@ -169,6 +166,8 @@ router.put('/', (req, res) => {
                                                     })
                                                 ]).then(res => {
                                                     resolve()
+                                                }).catch(err => {
+                                                    reject(err)
                                                 })
                                             } else resolve()
                                         });
@@ -181,14 +180,16 @@ router.put('/', (req, res) => {
                     challenge.checkpoints?.length > 0 ?
                         Promise.all([
                             challenge.checkpoints.map((checkpoint, c_index) => {
-                                con.query(checkpoint.id ? `UPDATE checkpoints SET challengeId = ?, description = ?, technologies = ? WHERE id = ${checkpoint.id}`
-                                    : "INSERT INTO checkpoints (challengeId, description, technologies, sources) VALUES (?, ?, ?, ?)",
-                                    [challenge.id, checkpoint.description, checkpoint.technologies ? JSON.stringify(checkpoint.technologies) : "[]", JSON.stringify(checkpoint.sources)],
-                                    function (err, result, fields) {
-                                        if (err) reject(err);
-                                        challenge.checkpoints[c_index].id = result.insertId
-                                        resolve()
-                                    });
+                                new Promise((resolve, reject) => {
+                                    con.query(checkpoint.id ? `UPDATE checkpoints SET challengeId = ?, description = ?, technologies = ?, sources = ? WHERE id = ${checkpoint.id}`
+                                        : "INSERT INTO checkpoints (challengeId, description, technologies, sources) VALUES (?, ?, ?, ?)",
+                                        [challenge.id, checkpoint.description, checkpoint.technologies ? JSON.stringify(checkpoint.technologies) : "[]", JSON.stringify(checkpoint.sources)],
+                                        function (err, result, fields) {
+                                            if (err) reject(err);
+                                            challenge.checkpoints[c_index].id = result.insertId
+                                            resolve()
+                                        });
+                                })
                             })
                         ]).then(res => {
                             resolve()
@@ -200,6 +201,7 @@ router.put('/', (req, res) => {
             ]).then(res => {
                 res.send(challenge)
             }).catch(err => {
+                console.log(err)
             })
         }).catch(err => {
         })
@@ -273,7 +275,7 @@ router.get('/', (req, res) => {
             con.end()
         });
     });
-}) 
+})
 
 router.get('/:id', (req, res) => {
     const con = connectDB()

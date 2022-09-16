@@ -43,7 +43,7 @@ router.get('/:id', (req, res) => {
             })
 
             if (jobIds.length > 0) {
-                let query = 'SELECT jobs.title, jobs.companyName, jobs.salary, jobs.hideSalary, jobs.level, jobs.compensations, categories.accentColor FROM jobs INNER JOIN categories ON categories.id=jobs.categoryId WHERE'
+                let query = 'SELECT jobs.id, jobs.title, jobs.companyName, jobs.salary, jobs.hideSalary, jobs.level, jobs.compensations, categories.accentColor FROM jobs INNER JOIN categories ON categories.id=jobs.categoryId WHERE'
 
                 jobIds.map((id, index) => {
                     query += `${index !== 0 ? 'OR' : ''} jobs.id = ${id} `

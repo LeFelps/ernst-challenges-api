@@ -65,8 +65,6 @@ router.get('/:id', (req, res) => {
         let challengeIds = []
         let checkpointSubmissions = result
 
-        console.log(checkpointSubmissions)
-
         result.map(res => {
             if (challengeIds.indexOf(res.challengeId) < 0) {
                 challengeIds.push(res.challengeId)
