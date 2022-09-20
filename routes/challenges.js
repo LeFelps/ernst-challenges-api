@@ -137,7 +137,7 @@ router.put('/', (req, res) => {
                     if (err) reject(err);
                     resolve(result)
                 })
-        }).then(res => {
+        }).then(response => {
             Promise.all([
                 new Promise((resolve, reject) => {
                     challenge.questions?.length > 0 ?
@@ -164,8 +164,8 @@ router.put('/', (req, res) => {
                                                                 });
                                                         })
                                                     })
-                                                ]).then(res => {
-                                                    resolve()
+                                                ]).then(response => {
+                                                    resolve(response)
                                                 }).catch(err => {
                                                     reject(err)
                                                 })
@@ -173,7 +173,11 @@ router.put('/', (req, res) => {
                                         });
                                 })
                             })
-                        ])
+                        ]).then(response => {
+                            resolve(response)
+                        }).catch(err => {
+                            reject(err)
+                        })
                         : resolve([])
                 }),
                 new Promise((resolve, reject) => {
@@ -191,19 +195,23 @@ router.put('/', (req, res) => {
                                         });
                                 })
                             })
-                        ]).then(res => {
-                            resolve()
+                        ]).then(response => {
+                            resolve(response)
                         }).catch(err => {
                             reject(err)
                         })
                         : resolve([])
                 })
-            ]).then(res => {
+            ]).then(result => {
+                challenge.category = {
+                    id: challenge.categoryId
+                }
                 res.send(challenge)
             }).catch(err => {
                 console.log(err)
             })
         }).catch(err => {
+            reject(err)
         })
     });
 })
