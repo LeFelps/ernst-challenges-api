@@ -8,6 +8,7 @@ import jobsRoutes from './routes/jobs.js'
 import opponentsRoutes from './routes/opponents.js'
 import jobApplicationRoutes from './routes/job-applications.js'
 import challengeSubmissionsRoutes from './routes/challenge-submissions.js'
+import categoriesRoutes from './routes/categories.js'
 
 const app = express();
 const PORT = 5000;
@@ -21,11 +22,12 @@ app.use(function (req, res, next) {
     next();
 });
 
-app.use('/users', usersRoutes)
-app.use('/job-applications', jobApplicationRoutes)
+app.use('/categories', categoriesRoutes)
 app.use('/challenge-submissions', challengeSubmissionsRoutes)
 app.use('/challenges', challengesRoutes)
+app.use('/job-applications', jobApplicationRoutes)
 app.use('/jobs', jobsRoutes)
 app.use('/opponents', opponentsRoutes)
+app.use('/users', usersRoutes)
 
 app.listen(PORT, () => console.log(`Server running on PORT: http://localhost:${PORT}`))

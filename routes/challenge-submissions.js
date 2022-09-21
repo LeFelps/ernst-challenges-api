@@ -8,7 +8,7 @@ router.post('/', (req, res) => {
     const con = connectDB()
 
     const reqBody = req.body
-    con.query("INSERT INTO user_checkpoints (userId, checkpointId, link, completed) VALUES (?, ?)", [reqBody.userId, reqBody.checkpointId, reqBody.link, reqBody.completed], function (err, result, fields) {
+    con.query("INSERT INTO user_checkpoints (userId, checkpointId, link, completed) VALUES (?, ?, ?, ?)", [reqBody.userId, reqBody.checkpointId, reqBody.link, reqBody.completed], function (err, result, fields) {
         if (err) throw err;
         res.send({
             userId: reqBody.userId,
@@ -110,7 +110,8 @@ router.get('/:id', (req, res) => {
             })
         } else {
             res.send([])
-            con.end()}
+            con.end()
+        }
     });
 })
 
@@ -118,7 +119,7 @@ router.delete('/', (req, res) => {
     const con = connectDB()
 
     const reqBody = req.body
-    con.query("UPDATE user_checkpoints SET link = ?, completed = ? WHERE userId = ? AND checkpointId = ?", [reqBody.link, reqBody.completed, reqBody.userId, reqBody.checkpointId], function (err, result, fields) {
+    con.query(`DELETE FROM user_checkpoints WHERE id = ${reqBody.id}`, function (err, result, fields) {
         if (err) throw err;
         res.send(result)
         con.end()
