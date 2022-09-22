@@ -1,7 +1,6 @@
 import express from "express";
 import connectDB from '../database/connection.js'
 
-
 const router = express.Router();
 
 router.post('/', (req, res) => {
@@ -58,6 +57,8 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
     const con = connectDB()
 
+    const getChallenges = req.query?.challenges
+
     const reqBody = req.body
     con.query("SELECT user_checkpoints.userId, user_checkpoints.checkpointId, user_checkpoints.link, user_checkpoints.completed, checkpoints.challengeId FROM user_checkpoints INNER JOIN checkpoints ON user_checkpoints.checkpointId=checkpoints.id WHERE userId = ?", [req.params['id']], function (err, result, fields) {
         if (err) throw err;
@@ -65,13 +66,19 @@ router.get('/:id', (req, res) => {
         let challengeIds = []
         let checkpointSubmissions = result
 
+        checkpointSubmissions.map((submission) => {
+            submission.completed = submission.completed === 1 ? true : false
+        })
+
         result.map(res => {
             if (challengeIds.indexOf(res.challengeId) < 0) {
                 challengeIds.push(res.challengeId)
             }
         })
 
-        if (challengeIds.length > 0) {
+        if (!getChallenges) {
+            res.send(checkpointSubmissions)
+        } else if (challengeIds.length > 0) {
             let challengeQuery = 'SELECT challenges.id, challenges.title, challenges.icon, categories.accentColor FROM challenges INNER JOIN categories ON categories.id=challenges.categoryId WHERE'
             let checkpointQuery = 'SELECT id, challengeId FROM checkpoints WHERE'
 

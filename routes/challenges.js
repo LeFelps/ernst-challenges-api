@@ -3,7 +3,6 @@ import connectDB from "../database/connection.js";
 
 const router = express.Router();
 
-
 router.post('/', (req, res) => {
     const con = connectDB()
 
@@ -216,73 +215,61 @@ router.put('/', (req, res) => {
     });
 })
 
-router.get('/categories', (req, res) => {
-    const con = connectDB()
-
-    con.connect(function (err) {
-        if (err) throw err;
-        con.query("SELECT * FROM categories", function (err, result, fields) {
-            if (err) throw err;
-            if (req.query?.min !== 'true') {
-                let fullCategories = [...result]
-                con.query("SELECT * FROM challenges", function (err, result, fields) {
-                    if (err) throw err;
-                    let challenges = [...result]
-                    fullCategories.map((category, index) => {
-                        fullCategories[index].challenges = challenges.filter(c => c.categoryId === category.id)
-                        return category
-                    })
-                    res.send(fullCategories)
-                    con.end()
-                });
-            } else {
-                res.send(result)
-                con.end()
-            }
-        });
-    });
-})
-
-router.post('/categories', (req, res) => {
-    const con = connectDB()
-    const category = req.body
-    con.connect(function (err) {
-        if (err) throw err;
-        con.query("INSERT INTO categories (name, accentColor) VALUES (?, ?)",
-            [category.name, category.accentColor],
-            function (err, result, fields) {
-                if (err) throw err;
-                res.send({ ...category, id: result.insertId })
-                con.end()
-            });
-    });
-})
-
-router.put('/categories', (req, res) => {
-    const con = connectDB()
-    const category = req.body
-    con.connect(function (err) {
-        if (err) throw err;
-        con.query("UPDATE categories SET name = ?, accentColor = ? WHERE id = ?",
-            [category.name, category.accentColor, category.id],
-            function (err, result, fields) {
-                if (err) throw err;
-                res.send({ ...category })
-                con.end()
-            });
-    });
-})
-
 router.get('/', (req, res) => {
     const con = connectDB()
+
+    const getCheckpoints = req.query?.checkpoints
+    // const getQuestions = req.query?.questions
+
     con.connect(function (err) {
         if (err) throw err;
-        con.query("SELECT * FROM challenges", function (err, result, fields) {
-            if (err) throw err;
-            res.send(result)
-            con.end()
-        });
+        new Promise((resolve, reject) => {
+            con.query("SELECT * FROM challenges", function (err, result, fields) {
+                if (err) reject(err);
+                resolve(result)
+            });
+        }).then(challenges => {
+            if (
+                getCheckpoints
+                // || getQuestions
+            ) {
+                Promise.all(([
+                    getCheckpoints &&
+                    new Promise((resolve, reject) => {
+                        con.query("SELECT * FROM checkpoints", [], function (err, result, fields) {
+                            if (err) reject(err);
+                            resolve(result)
+                        });
+                    }),
+                    // getQuestions &&
+                    // new Promise((resolve, reject) => {
+
+                    // })
+                ]))
+                    .then(([
+                        checkpoints,
+                        // questions
+                    ]) => {
+
+                        challenges.map((challenge, index) => {
+                            challenge.checkpoints = checkpoints.filter(c => c.challengeId === challenge.id)
+                        })
+
+                        res.send(challenges)
+
+                    })
+                    .catch(err => console.log(err))
+
+            } else {
+                res.send(resp)
+                con.end()
+            }
+        }).catch(err => {
+            console.error(err)
+        })
     });
+
+
 })
 
 router.get('/:id', (req, res) => {
