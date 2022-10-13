@@ -91,8 +91,19 @@ router.get('/', (req, res) => {
 router.get('/public', (req, res) => {
     const con = connectDB()
 
+    const jobId = req.query['byJob']
+
+    const query = 'SELECT ' +
+        'users.id, users.username, users.email, users.fullName, users.phone, users.jobTitle, users.jobLevel, users.categoryId, ' +
+        'categories.accentColor, users.skills, users.languages, users.experience, users.education ' +
+        'FROM users ' +
+        'INNER JOIN categories ON categories.id = categoryId ' +
+        `${jobId ? 'INNER JOIN user_applications ON user_applications.userId = users.id ' : ''}` +
+        'WHERE' +
+        `${jobId ? ' user_applications.jobId = ' + jobId : ' users.public = true'}`
+
     const reqBody = req.body
-    con.query("SELECT users.id, users.username, users.email, users.fullName, users.phone, users.jobTitle, users.jobLevel, users.categoryId, categories.accentColor, users.skills, users.languages, users.experience, users.education FROM users INNER JOIN categories ON categories.id = categoryId WHERE users.public = true", function (err, result, fields) {
+    con.query(query, function (err, result, fields) {
         if (err) throw err;
 
         let users = result

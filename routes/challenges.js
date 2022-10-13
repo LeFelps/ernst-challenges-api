@@ -139,45 +139,80 @@ router.put('/', (req, res) => {
         }).then(response => {
             Promise.all([
                 new Promise((resolve, reject) => {
-                    challenge.questions?.length > 0 ?
-                        Promise.all([
-                            challenge.questions.map((question, q_index) => {
-                                new Promise((resolve, reject) => {
-                                    con.query(question.id ? `UPDATE questions SET challengeId = ?, title = ?, type = ?, level = ? WHERE id = ${question.id}`
-                                        : "INSERT INTO questions (challengeId, title, type, level) VALUES (?, ?, ?, ?)",
-                                        [challenge.id, question.title, question.type, question.level],
-                                        function (err, result, fields) {
-                                            if (err) reject(err);
-                                            challenge.questions[q_index].id = result.insertId
-                                            if (question?.options?.length > 0) {
-                                                Promise.all([
-                                                    question.options.map((option, o_index) => {
-                                                        new Promise((resolve, reject) => {
-                                                            con.query(option.id ? `UPDATE answers SET questionId = ?, type = ?, value = ?, correctAnswer = ? WHERE id = ${option.id}`
-                                                                : "INSERT INTO answers (questionId, type, value, correctAnswer) VALUES (?, ?, ?, ?)",
-                                                                [result.insertId, option.type, option.value, option.correctAnswer],
-                                                                function (err, result, fields) {
-                                                                    if (err) reject(err);
-                                                                    challenge.questions[q_index].options[o_index].id = result.insertId
-                                                                    resolve()
-                                                                });
-                                                        })
-                                                    })
-                                                ]).then(response => {
-                                                    resolve(response)
-                                                }).catch(err => {
-                                                    reject(err)
-                                                })
-                                            } else resolve()
-                                        });
-                                })
-                            })
-                        ]).then(response => {
-                            resolve(response)
-                        }).catch(err => {
-                            reject(err)
+                    new Promise((resolve, reject) => {
+                        let query = 'DELETE FROM questions ' +
+                            'WHERE challengeId = ' + challenge.id
+
+                        challenge.questions.map((question) => {
+                            if (question.id)
+                                query += ' AND id != ' + question.id
                         })
-                        : resolve([])
+
+                        con.query(query,
+                            function (err, result, fields) {
+                                if (err) reject(err);
+                                else resolve();
+                            })
+                    }),
+                        challenge.questions?.length > 0 ?
+                            Promise.all([
+                                challenge.questions.map((question, q_index) => {
+                                    Promise.all
+                                    question.id ? new Promise((resolve, reject) => {
+                                        let query = 'DELETE FROM answers ' +
+                                            'WHERE questionId = ' + question.id
+
+                                        question.options.map((option) => {
+                                            if (option.id)
+                                                query += ' AND id != ' + option.id
+                                        })
+
+                                        con.query(query,
+                                            function (err, result, fields) {
+                                                if (err) reject(err);
+                                                else resolve();
+                                            })
+                                    }) : null,
+                                        new Promise((resolve, reject) => {
+                                            con.query(question.id ? `UPDATE questions SET challengeId = ?, title = ?, type = ?, level = ? WHERE id = ${question.id}`
+                                                : "INSERT INTO questions (challengeId, title, type, level) VALUES (?, ?, ?, ?)",
+                                                [challenge.id, question.title, question.type, question.level],
+                                                function (err, result, fields) {
+                                                    if (err) reject(err);
+                                                    if (result?.insertId) {
+                                                        challenge.questions[q_index].id = result.insertId
+                                                        question.id = result.insertId
+                                                    }
+                                                    if (question?.options?.length > 0) {
+                                                        Promise.all([
+                                                            question.options.map((option, o_index) => {
+                                                                new Promise((resolve, reject) => {
+                                                                    con.query(option.id ? `UPDATE answers SET questionId = ?, type = ?, value = ?, correctAnswer = ? WHERE id = ${option.id}`
+                                                                        : "INSERT INTO answers (questionId, type, value, correctAnswer) VALUES (?, ?, ?, ?)",
+                                                                        [question.id, option.type, option.value, option.correctAnswer],
+                                                                        function (err, result, fields) {
+                                                                            if (err) reject(err);
+                                                                            if (result?.insertId)
+                                                                                challenge.questions[q_index].options[o_index].id = result.insertId
+                                                                            resolve()
+                                                                        });
+                                                                })
+                                                            })
+                                                        ]).then(response => {
+                                                            resolve(response)
+                                                        }).catch(err => {
+                                                            reject(err)
+                                                        })
+                                                    } else resolve()
+                                                });
+                                        })
+                                })
+                            ]).then(response => {
+                                resolve(response)
+                            }).catch(err => {
+                                reject(err)
+                            })
+                            : resolve([])
                 }),
                 new Promise((resolve, reject) => {
                     challenge.checkpoints?.length > 0 ?
@@ -224,7 +259,7 @@ router.get('/', (req, res) => {
     con.connect(function (err) {
         if (err) throw err;
         new Promise((resolve, reject) => {
-            con.query("SELECT * FROM challenges", function (err, result, fields) {
+            con.query("SELECT challenges.description, challenges.icon, challenges.title, challenges.id, challenges.brief, categories.accentColor FROM challenges INNER JOIN categories ON categories.id = challenges.categoryId", function (err, result, fields) {
                 if (err) reject(err);
                 resolve(result)
             });
@@ -312,7 +347,7 @@ router.get('/:id', (req, res) => {
 
                             let questionList = [...questionResult]
                             questionList.map((question, index) => {
-                                questionList[index].answers = answerResult.filter(a => a.questionId === question.id)
+                                questionList[index].options = answerResult.filter(a => a.questionId === question.id)
                                 return
                             })
 

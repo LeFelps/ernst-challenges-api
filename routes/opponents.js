@@ -43,7 +43,7 @@ router.put('/', (req, res) => {
     con.connect(function (err) {
         if (err) throw err;
         con.query("UPDATE opponents SET name = ?, level = ?, personality = ?, about = ? WHERE id = ?",
-            [opponent.name, opponent.level, opponent.personality, opponent.about, opponent.is],
+            [opponent.name, opponent.level, opponent.personality, opponent.about, opponent.id],
             function (err, result, fields) {
                 if (err) throw err;
                 res.send({ ...opponent })
@@ -51,7 +51,6 @@ router.put('/', (req, res) => {
             });
     });
 })
-
 
 router.get('/', (req, res) => {
     const con = connectDB()

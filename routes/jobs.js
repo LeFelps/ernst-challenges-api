@@ -68,7 +68,6 @@ router.put('/', (req, res) => {
     });
 })
 
-
 router.get('/', (req, res) => {
     const con = connectDB()
     con.connect(function (err) {
